@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Träning">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Träning</title>
+<style>
+:root{--bg:#14213d;--card:#1c2c4f;--line:#2e4170;--tx:#f3efe6;--mu:#9fb0d0;--ac:#fca311;--good:#7bd389;--mid:#f4d35e;--bad:#ff7b7b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(88px + env(safe-area-inset-bottom))}
+main{max-width:560px;margin:0 auto;padding:calc(16px + env(safe-area-inset-top)) 16px 16px}
+h1{font-size:30px;margin:4px 0 2px;letter-spacing:-.5px}
+.sub{color:var(--mu);margin:0 0 16px;text-transform:capitalize}
+.mu{color:var(--mu)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:0 0 12px}
+button{font:inherit;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:56px;cursor:pointer;touch-action:manipulation}
+button:active{transform:scale(.97)}
+.big{width:100%;background:var(--ac);color:#14213d;font-weight:800;font-size:19px;border-color:var(--ac);margin:4px 0 12px}
+.ghost{width:100%;margin:4px 0 10px}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px}
+.seg button{font-size:21px;font-weight:700}
+.on{background:var(--ac)!important;color:#14213d!important;border-color:var(--ac)!important}
+.lab{display:flex;justify-content:space-between;color:var(--mu);font-size:13px;margin-top:6px}
+.step{display:grid;grid-template-columns:72px 1fr 72px;gap:8px;align-items:center;margin-bottom:12px}
+.step button{font-size:32px;min-height:64px}
+.step div{text-align:center}
+.step b{font-size:36px;display:block;line-height:1.1}
+.step small{color:var(--mu)}
+.score{font-size:76px;font-weight:800;line-height:1;letter-spacing:-3px}
+.score small{font-size:22px;letter-spacing:0;color:var(--mu);margin-left:4px}
+.rec{font-size:26px;font-weight:800;margin:4px 0 6px}
+.bar{display:grid;grid-template-columns:120px 1fr 48px;gap:8px;align-items:center;margin:8px 0;font-size:14px}
+.bar i{height:8px;background:var(--line);border-radius:4px;display:block}
+.bar u{display:block;height:8px;background:var(--ac);border-radius:4px}
+.bar em{font-style:normal;text-align:right;color:var(--mu)}
+summary{cursor:pointer;color:var(--mu);padding:6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chips span{background:var(--bg);border-radius:10px;padding:4px 10px;font-size:15px}
+.tap{cursor:pointer}
+.pill{display:inline-block;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 14px;margin:0 0 14px;font-size:15px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#101a30;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+nav button{flex:1;border:0;border-radius:0;background:none;min-height:68px;color:var(--mu);font-size:14px;font-weight:600}
+nav button.on{background:none!important;color:var(--ac)!important}
+.sheet{position:fixed;inset:0;background:var(--bg);overflow:auto;padding:calc(16px + env(safe-area-inset-top)) 16px 48px;z-index:10}
+.sheet>div{max-width:560px;margin:0 auto}
+.why{background:var(--card);border-left:4px solid var(--ac);border-radius:10px;padding:12px 14px;margin:0 0 16px;font-size:15px}
+.feel{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.feel button{font-weight:700;font-size:18px}
+.row{display:flex;gap:8px;margin-bottom:8px}
+.row .item{flex:1;text-align:left;padding:0 16px;font-weight:600}
+.row .item small{color:var(--mu);font-weight:400;margin-left:8px}
+.row .x{width:56px}
+input[type=text],select{width:100%;font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--line);border-radius:14px;min-height:56px;padding:0 14px;margin-bottom:8px}
+.sets .x{min-height:40px;width:40px;margin-left:auto}
+.sets div{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+.rules li{margin-bottom:8px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<div id="sheet" class="sheet" hidden></div>
+<nav>
+  <button data-t="idag" onclick="go('idag')">☀️<br>Idag</button>
+  <button data-t="trana" onclick="go('trana')">🏋️<br>Träna</button>
+  <button data-t="mer" onclick="go('mer')">⚙️<br>Mer</button>
+</nav>
+<script>
+const KEY='traning.v1';
+let S=load();
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.v===1){s.custom=s.custom||[];return s}}catch(e){}return{v:1,checkins:{},log:{},custom:[]}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){alert('Kunde inte spara. Lagringen är full eller blockerad i webbläsaren.')}}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n=x=>String(x).replace('.',',');
+const today=()=>new Date(Date.now()-new Date().getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const MODE={reps:'Reps',tid:'Tid',vikt:'Reps + extra vikt',hjalp:'Reps + hjälp'};
+const DEF=[['push','Armhävning','reps'],['diamond','Diamond-armhävning','reps'],['archer','Archer-armhävning','reps'],['onearm','Enarms-armhävning','reps'],['dips','Dips','vikt'],['pullneg','Pull-up, negativ','reps'],['pullband','Pull-up med band','hjalp'],['pull','Pull-up (strikt/vikt)','vikt'],['chin','Chin-up','vikt'],['row','Australisk rodd','reps'],['squat','Knäböj','reps'],['pistol','Pistol squat','reps'],['plank','Planka','tid'],['lsit','L-sit','tid'],['hang','Dead hang','tid'],['legraise','Hängande benlyft','reps'],['bench','Bänkpress','vikt'],['squatbb','Knäböj med stång','vikt'],['dl','Marklyft','vikt'],['ohp','Axelpress','vikt'],['bbrow','Skivstångsrodd','vikt']];
+const exs=()=>DEF.map(([id,name,mode])=>({id,name,mode})).concat(S.custom);
+const exById=id=>exs().find(e=>e.id===id)||{id,name:id,mode:'reps'};
+const fmt=(e,s)=>e.mode==='tid'?`${s.secs} s`:e.mode==='vikt'?(s.kg?`${s.reps} × ${n(s.kg)} kg`:`${s.reps} reps`):e.mode==='hjalp'?`${s.reps} reps (−${n(s.kg)} kg hjälp)`:`${s.reps} reps`;
+const REC={tung:{t:'Tungt',c:'var(--good)',d:'Bra dag för tung träning. Sikta på att slå förra gången.'},latt:{t:'Lätt',c:'var(--mid)',d:'Kör lätt eller teknik. Behåll nivåerna, inga höjningar.'},vila:{t:'Vila',c:'var(--bad)',d:'Vila, promenad eller rörlighet. Tränar du ändå: ta det en bit under sist.'}};
+
+let tab='idag',draft=null,cur=null;
+function go(t){tab=t;render();scrollTo(0,0)}
+function render(){
+  $('#app').innerHTML=tab==='idag'?viewToday():tab==='trana'?viewTrain():viewMore();
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));
+}
+
+/* ---------- Dagsform ---------- */
+function getDraft(){if(!draft)draft={...(S.checkins[today()]||{sleep:7.5,sq:3,energy:3,ov:1,ben:1,core:1,stress:2})};return draft}
+function calc(c){
+  const parts=[['Sömn (timmar)',Math.max(0,Math.min(1,(c.sleep-4)/4))*25,25],['Sömnkvalitet',(c.sq-1)/4*20,20],['Energi',(c.energy-1)/4*25,25],['Träningsvärk',(5-(c.ov+c.ben+c.core)/3)/4*15,15],['Stress',(5-c.stress)/4*15,15]];
+  const score=Math.round(parts.reduce((a,p)=>a+p[1],0));
+  let rec=score>=70?'tung':score>=40?'latt':'vila';const notes=[];
+  if(rec==='tung'&&c.sleep<5){rec='latt';notes.push('Under 5 timmars sömn: tungt är bortvalt.')}
+  if(rec==='tung'&&Math.max(c.ov,c.ben,c.core)>=5){rec='latt';notes.push('Mycket stark värk: ta det lugnt.')}
+  if(c.ov>=4)notes.push('Överkroppen är öm. Prioritera ben och core.');
+  if(c.ben>=4)notes.push('Benen är ömma. Prioritera överkropp och core.');
+  if(c.core>=4)notes.push('Coren är öm. Hoppa över tung core-träning.');
+  return{score,rec,parts,notes};
+}
+const seg=k=>`<div class="seg">${[1,2,3,4,5].map(v=>`<button class="${getDraft()[k]===v?'on':''}" data-k="${k}" data-v="${v}">${v}</button>`).join('')}</div>`;
+const qrow=(t,k,lo,hi)=>`<div class="card"><b>${t}</b>${seg(k)}<div class="lab"><span>${lo}</span><span>${hi}</span></div></div>`;
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-k]');if(!b)return;
+  getDraft()[b.dataset.k]=+b.dataset.v;
+  b.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+});
+function sleepStep(d){const x=getDraft();x.sleep=Math.max(0,Math.min(14,Math.round((x.sleep+d)*2)/2));$('#sleepv').textContent=n(x.sleep)}
+function result(c){
+  const r=calc(c),R=REC[r.rec];
+  return `<div class="card" style="border-color:${R.c}"><div class="score" style="color:${R.c}">${r.score}<small>/100</small></div>
+  <div class="rec" style="color:${R.c}">${R.t}</div><p style="margin:0 0 8px">${R.d}</p>
+  ${r.notes.map(x=>`<p class="mu" style="margin:4px 0">${x}</p>`).join('')}
+  <details><summary>Så räknades det</summary>${r.parts.map(p=>`<div class="bar"><span>${p[0]}</span><i><u style="width:${p[1]/p[2]*100}%"></u></i><em>${Math.round(p[1])}/${p[2]}</em></div>`).join('')}
+  <p class="mu" style="font-size:14px">Tungt från 70, lätt 40–69, vila under 40. Under 5 h sömn eller värk 5/5 sänker tungt till lätt.</p></details></div>`;
+}
+function viewToday(){
+  const d=getDraft(),c=S.checkins[today()];
+  return `<h1>${c?'Din dagsform':'God morgon'}</h1><p class="sub">${new Date().toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})}</p>
+  ${c?result(c):''}
+  <div class="card"><b>Sömn i natt</b><div class="step" style="margin:10px 0 0"><button onclick="sleepStep(-.5)">−</button><div><b id="sleepv">${n(d.sleep)}</b><small>timmar</small></div><button onclick="sleepStep(.5)">+</button></div></div>
+  ${qrow('Sömnkvalitet','sq','dålig','mycket bra')}${qrow('Energi','energy','slut','full fart')}
+  ${qrow('Värk: överkropp','ov','ingen','mycket')}${qrow('Värk: ben','ben','ingen','mycket')}${qrow('Värk: core','core','ingen','mycket')}
+  ${qrow('Stress','stress','lugn','mycket stressad')}
+  <button class="big" onclick="saveCI()">${c?'Uppdatera dagsform':'Spara dagsform'}</button>`;
+}
+function saveCI(){const d=getDraft(),r=calc(d);S.checkins[today()]={...d,score:r.score,rec:r.rec};save();draft=null;render();scrollTo(0,0)}
+
+/* ---------- Träningslogg ---------- */
+function lastSession(id){
+  for(const d of Object.keys(S.log).sort().reverse()){if(d===today())continue;const it=S.log[d].find(x=>x.ex===id&&x.sets.length);if(it)return{d,sets:it.sets}}
+  return null;
+}
+function suggest(e){
+  const m=e.mode,td=(S.log[today()]||[]).find(x=>x.ex===e.id);
+  if(td&&td.sets.length)return{vals:{...td.sets[td.sets.length-1]},why:'Samma som förra setet idag.'};
+  const base={reps:{reps:8,rest:90},tid:{secs:30,rest:60},vikt:{reps:8,kg:20,rest:120},hjalp:{reps:5,kg:20,rest:90}}[m];
+  const ls=lastSession(e.id);
+  if(!ls)return{vals:base,why:'Första gången: börja lagom och känn efter. Appen lär sig av dina set.'};
+  const sets=ls.sets,l=sets[sets.length-1],v={rest:l.rest||90};
+  if(m==='tid')v.secs=l.secs||30;else v.reps=l.reps||8;
+  if(m==='vikt'||m==='hjalp')v.kg=l.kg||0;
+  const ok=sets.every(s=>s.feel!=='tungt');
+  const c=S.checkins[today()],rec=c?c.rec:'tung';
+  let why=`Förra gången (${ls.d}): ${fmt(e,l)}. `;
+  if(rec==='vila'){
+    if(m==='vikt')v.kg=Math.round(v.kg*.8/2.5)*2.5;
+    else if(m==='tid')v.secs=Math.max(5,Math.round(v.secs*.8/5)*5);
+    else v.reps=Math.max(1,Math.round(v.reps*.8));
+    return{vals:v,why:why+'Dagsformen säger vila: cirka 20 % lägre än sist.'};
+  }
+  if(rec==='latt'||!ok)return{vals:v,why:why+(rec==='latt'?'Lätt dag: behåll nivån, ingen höjning.':'Det kändes tungt: behåll tills det känns lagom.')};
+  if(m==='tid'){v.secs+=5;why+='Klarade det: +5 sekunder.'}
+  else if(m==='vikt'&&v.reps>=10){v.kg+=2.5;v.reps=8;why+='10 reps eller fler: +2,5 kg och tillbaka till 8 reps.'}
+  else if(m==='hjalp'&&v.reps>=10&&v.kg>0){v.kg=Math.max(0,v.kg-2.5);v.reps=8;why+='10 reps eller fler: 2,5 kg mindre hjälp, tillbaka till 8 reps.'}
+  else{v.reps+=1;why+='Klarade det: +1 rep.'}
+  return{vals:v,why};
+}
+function viewTrain(){
+  const items=(S.log[today()]||[]).filter(i=>i.sets.length),c=S.checkins[today()];
+  const past=Object.keys(S.log).filter(d=>d!==today()&&S.log[d].some(i=>i.sets.length)).sort().reverse().slice(0,7);
+  return `<h1>Träna</h1><p class="sub">${new Date().toLocaleDateString('sv-SE',{weekday:'long',day:'numeric',month:'long'})}</p>
+  <div class="pill">${c?`Dagsform ${c.score}: ${REC[c.rec].t.toLowerCase()}`:'Ingen dagsform idag. Fyll i under Idag.'}</div>
+  ${items.map(i=>{const e=exById(i.ex);return `<div class="card tap" onclick="openEx('${i.ex}')"><b>${esc(e.name)}</b><div class="chips">${i.sets.map(s=>`<span>${fmt(e,s)}</span>`).join('')}</div></div>`}).join('')}
+  ${items.length?'':'<p class="mu">Inga set loggade idag. Lägg till din första övning.</p>'}
+  <button class="big" onclick="openPicker()">+ Lägg till övning</button>
+  ${past.length?`<h3>Tidigare pass</h3>`+past.map(d=>`<div class="card"><b>${d}</b><div class="mu" style="font-size:15px">${S.log[d].filter(i=>i.sets.length).map(i=>`${esc(exById(i.ex).name)} (${i.sets.length})`).join(', ')}</div></div>`).join(''):''}`;
+}
+function openSheet(h){const s=$('#sheet');s.innerHTML=`<div>${h}</div>`;s.hidden=false;s.scrollTop=0}
+function closeSheet(){$('#sheet').hidden=true;render()}
+function openPicker(){
+  openSheet(`<button class="ghost" onclick="closeSheet()">← Tillbaka</button><h1>Välj övning</h1><p class="sub" style="text-transform:none">Egna övningar kan tas bort med ✕.</p>
+  ${exs().map(e=>`<div class="row"><button class="item" onclick="openEx('${e.id}')">${esc(e.name)}<small>${MODE[e.mode]}</small></button>${e.custom?`<button class="x" onclick="delCustom('${e.id}')">✕</button>`:''}</div>`).join('')}
+  <div class="card" style="margin-top:16px"><b>Ny egen övning</b><input type="text" id="nn" placeholder="Namn, t.ex. Muscle-up" style="margin-top:10px"><select id="nm">${Object.entries(MODE).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select><button class="big" style="margin-bottom:0" onclick="addCustom()">Spara övning</button></div>`);
+}
+function addCustom(){const name=$('#nn').value.trim();if(!name){alert('Skriv ett namn på övningen.');return}S.custom.push({id:'c'+Date.now(),name,mode:$('#nm').value,custom:true});save();openPicker()}
+function delCustom(id){if(!confirm('Ta bort övningen? Loggade set finns kvar i historiken.'))return;S.custom=S.custom.filter(e=>e.id!==id);save();openPicker()}
+function openEx(id){const s=suggest(exById(id));cur={id,vals:s.vals,why:s.why,feel:'lagom'};showEx()}
+function showEx(){
+  const e=exById(cur.id),m=e.mode,v=cur.vals;
+  const f=[];
+  if(m==='tid')f.push(['secs','sekunder',5]);else f.push(['reps','reps',1]);
+  if(m==='vikt')f.push(['kg','extra vikt (kg)',2.5]);
+  if(m==='hjalp')f.push(['kg','hjälp (kg)',2.5]);
+  f.push(['rest','vila (sek)',15]);
+  const it=(S.log[today()]||[]).find(x=>x.ex===cur.id),sets=it?it.sets:[];
+  openSheet(`<button class="ghost" onclick="closeSheet()">← Klar med övningen</button><h1>${esc(e.name)}</h1><p class="sub" style="text-transform:none">Set ${sets.length+1}</p>
+  <div class="why">${cur.why}</div>
+  ${f.map(([k,l,st])=>`<div class="step"><button onclick="adj('${k}',-${st})">−</button><div><b id="v_${k}">${n(v[k]??0)}</b><small>${l}</small></div><button onclick="adj('${k}',${st})">+</button></div>`).join('')}
+  <div class="feel">${[['latt','Lätt'],['lagom','Lagom'],['tungt','Tungt']].map(([k,l])=>`<button class="${cur.feel===k?'on':''}" data-f="${k}" onclick="setFeel('${k}')">${l}</button>`).join('')}</div>
+  <button class="big" onclick="saveSet()">Spara set</button>
+  ${sets.length?`<div class="card sets"><b>Loggat idag</b>${sets.map((s,i)=>`<div><span>Set ${i+1}: ${fmt(e,s)}</span><span class="mu">${{latt:'lätt',lagom:'lagom',tungt:'tungt'}[s.feel]}</span><button class="x" onclick="delSet(${i})">✕</button></div>`).join('')}</div>`:''}`);
+}
+function adj(k,d){const x=Math.round((cur.vals[k]+d)*10)/10;cur.vals[k]=Math.max(k==='reps'||k==='secs'?1:0,x);$('#v_'+k).textContent=n(cur.vals[k])}
+function setFeel(k){cur.feel=k;document.querySelectorAll('.feel button').forEach(b=>b.classList.toggle('on',b.dataset.f===k))}
+function saveSet(){
+  const e=exById(cur.id),m=e.mode,v=cur.vals,s={rest:v.rest,feel:cur.feel};
+  if(m==='tid')s.secs=v.secs;else s.reps=v.reps;
+  if(m==='vikt'||m==='hjalp')s.kg=v.kg||0;
+  const d=today(),day=S.log[d]=S.log[d]||[];let it=day.find(x=>x.ex===cur.id);
+  if(!it){it={ex:cur.id,sets:[]};day.push(it)}
+  it.sets.push(s);save();
+  if(navigator.vibrate)navigator.vibrate(30);
+  cur.why='Samma som förra setet idag.';cur.feel='lagom';showEx();
+}
+function delSet(i){const it=(S.log[today()]||[]).find(x=>x.ex===cur.id);if(!it)return;it.sets.splice(i,1);save();showEx()}
+
+/* ---------- Mer ---------- */
+function viewMore(){
+  return `<h1>Mer</h1><p class="sub">Säkerhetskopia och regler</p>
+  <div class="card"><b>Säkerhetskopia</b><p class="mu" style="margin:6px 0 12px">All data finns bara i den här telefonen. Spara en kopia då och då.</p>
+  <button class="big" onclick="exp()">Spara säkerhetskopia</button>
+  <label><span class="ghost" style="display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:14px;min-height:56px;background:var(--bg);cursor:pointer">Läs in säkerhetskopia</span><input type="file" accept=".json,application/json" onchange="imp(this)" hidden></label></div>
+  <div class="card rules"><b>Så funkar reglerna</b><ul style="padding-left:20px;margin:10px 0 0">
+  <li><b>Dagsform 0–100:</b> sömntimmar 25 p, sömnkvalitet 20 p, energi 25 p, träningsvärk 15 p, stress 15 p.</li>
+  <li><b>Tungt/lätt/vila:</b> 70+ tungt, 40–69 lätt, under 40 vila.</li>
+  <li><b>Förslag på set:</b> kändes inget set tungt förra gången höjs det: +1 rep, +5 s eller +2,5 kg. Vid 10 reps med vikt går vikten upp och reps ner till 8.</li>
+  <li><b>Lätt dag:</b> samma som sist. <b>Vilodag:</b> cirka 20 % lägre.</li>
+  <li>Du bestämmer alltid själv. Förslaget är bara en utgångspunkt.</li></ul></div>
+  <div class="card"><b>Rensa allt</b><p class="mu" style="margin:6px 0 12px">Raderar all data i appen. Gör en säkerhetskopia först.</p><button class="ghost" style="color:var(--bad);margin:0" onclick="wipe()">Rensa all data</button></div>`;
+}
+function exp(){
+  const b=new Blob([JSON.stringify(S)],{type:'application/json'}),a=document.createElement('a');
+  a.href=URL.createObjectURL(b);a.download='traning-backup-'+today()+'.json';document.body.appendChild(a);a.click();a.remove();
+}
+function imp(inp){
+  const f=inp.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(d.v!==1||!d.log||!d.checkins)throw 0;
+    if(!confirm('Ersätta all data i appen med säkerhetskopian?'))return;
+    d.custom=d.custom||[];S=d;save();render();alert('Klart! Säkerhetskopian är inläst.')}catch(e){alert('Filen är ingen säkerhetskopia från appen.')}};
+  r.readAsText(f);inp.value='';
+}
+function wipe(){if(confirm('Radera ALL data i appen?')&&confirm('Är du helt säker? Det går inte att ångra.')){S={v:1,checkins:{},log:{},custom:[]};save();draft=null;render()}}
+
+render();
+if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
